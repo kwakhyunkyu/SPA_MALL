@@ -19,12 +19,29 @@ connect(); // mongoose를 연결합니다.
 io.on('connection', (sock) => {
   console.log('새로운 소켓이 연결됐어요!'); // Socket 사용자가 접속합니다.
 
-  // Socket 사용자가 접속하였을 때, 바로 BUY_GOODS Socket 이벤트를 진행합니다.
-  sock.emit('BUY_GOODS', {
-    nickname: '서버가 보내준 구매자 닉네임',
-    goodsId: 10, // 서버가 보내준 상품 데이터 고유 ID
-    goodsName: '서버가 보내준 구매자가 구매한 상품 이름',
-    date: '서버가 보내준 구매 일시',
+  // // Socket 사용자가 접속하였을 때, 바로 BUY_GOODS Socket 이벤트를 진행합니다.
+  // sock.emit('BUY_GOODS', {
+  //   nickname: '서버가 보내준 구매자 닉네임',
+  //   goodsId: 10, // 서버가 보내준 상품 데이터 고유 ID
+  //   goodsName: '서버가 보내준 구매자가 구매한 상품 이름',
+  //   date: '서버가 보내준 구매 일시',
+  // });
+
+  // 1. 클라이언트가 상품을 구매했을 때, 발생하는 이벤트입니다.
+  sock.on('BUY', (data) => {
+    const { nickname, goodsId, goodsName } = data;
+
+    const emitData = {
+      // 2. emit 데이터 만들기
+      nickname: nickname,
+      goodsId: goodsId,
+      goodsName: goodsName,
+      date: new Date().toISOString(),
+    };
+
+    // 3. 클라이언트가 구매한 정보를 바탕으로 BUY_GOODS 메세지를 전달해줘야 합니다.
+    // sock.emit
+    io.emit('BUY_GOODS', emitData);
   });
 
   // 현재 접속한 Socket 클라이언트가 종료되었을 때, 실행됩니다.
