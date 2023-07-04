@@ -1,30 +1,27 @@
-const express = require("express");
+const jwt = require('jsonwebtoken');
+const express = require('express');
 const router = express.Router();
-const jwt = require("jsonwebtoken");
 
-const User = require("../schemas/user");
+const User = require('../schemas/user');
 
 // 로그인 API
-router.post("/auth", async (req, res) => {
+router.post('/auth', async (req, res) => {
   const { email, password } = req.body;
 
-  // 이메일이 일치하는 유저를 찾는다.
   const user = await User.findOne({ email });
 
-  // 1. 이메일이 일치하는 유저가 존재하지 않거나
-  // 2. 유저를 찾았지만, 유저의 비밀번호와 입력한 비밀번호가 다를 때,
-  if (!user || user.password !== password) {
+  // NOTE: 인증 메세지는 자세히 설명하지 않는것을 원칙으로 한다.
+  if (!user || password !== user.password) {
     res.status(400).json({
-      errorMessage: "로그인에 실패하였습니다.",
+      errorMessage: '이메일 또는 패스워드가 틀렸습니다.',
     });
     return;
   }
 
-  // JWT를 생성
-  const token = jwt.sign({ userId: user.userId }, "customized-secret-key");
+  const token = jwt.sign({ userId: user.userId }, 'customized-secret-key');
 
-  res.cookie("Authorization", `Bearer ${token}`);
-  res.status(200).json({ token });
+  res.cookie('authorization', 'Bearer ' + token); // JWT를 Cookie로 할당합니다!
+  res.status(200).json({ token }); // JWT를 Body로 할당합니다!
 });
 
 module.exports = router;

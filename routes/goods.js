@@ -1,27 +1,18 @@
 const express = require("express");
 const router = express.Router();
-const Goods = require("../schemas/goods");
-const Cart = require("../schemas/cart.js");
 
-const authMiddleWare = require("../middlewares/auth-middleware");
+const Goods = require("../schemas/goods.js");
+const Cart = require("../schemas/cart.js");
+const authMiddleware = require("../middlewares/auth-middleware");
 
 // 장바구니 조회 API
-router.get("/goods/cart", authMiddleWare, async (req, res) => {
+router.get("/goods/cart", authMiddleware, async (req, res) => {
   const { userId } = res.locals.user;
-  // 장바구니에 해당하는 정보를 찾음
-  const carts = await Cart.find({ userId: userId });
-  // [
-  //  {goodsId, quantity},
-  //  {goodsId, quantity},
-  // ];
-  const goodsIds = carts.map((cart) => {
-    return cart.goodsId;
-  });
-  // [2, 11, 19];
+
+  const carts = await Cart.find({ userId }).exec();
+  const goodsIds = carts.map((cart) => cart.goodsId);
 
   const goods = await Goods.find({ goodsId: goodsIds });
-  // Goods에 해당하는 모든 정보를 가지고 올건데,
-  // 만약 goodsIds 변수 안에 존재하는 값일 때에만 조회하라.
 
   const results = carts.map((cart) => {
     return {
@@ -40,7 +31,7 @@ router.get("/goods", async (req, res) => {
   const { category } = req.query;
 
   const goods = await Goods.find(category ? { category } : {})
-    .sort("-date") // 내림 차순으로 정렬한다.
+    .sort("-date")
     .exec();
 
   const results = goods.map((item) => {
@@ -53,16 +44,16 @@ router.get("/goods", async (req, res) => {
     };
   });
 
-  res.status(200).json({ goods: results });
+  res.json({ goods: results });
 });
 
-// 상품 목록 상세 조회 API
+// 상품 상세 조회 API
 router.get("/goods/:goodsId", async (req, res) => {
   const { goodsId } = req.params;
 
-  const goods = await Goods.findOne({ goodsId })
-    .sort("-date") // 내림 차순으로 정렬한다.
-    .exec();
+  const goods = await Goods.findOne({ goodsId: goodsId }).exec();
+
+  if (!goods) return res.status(404).json({});
 
   const result = {
     goodsId: goods.goodsId,
@@ -72,17 +63,16 @@ router.get("/goods/:goodsId", async (req, res) => {
     category: goods.category,
   };
 
-  res.status(200).json({ goods: result });
+  res.json({ goods: result });
 });
 
 // 장바구니 등록 API
-router.post("/goods/:goodsId/cart", authMiddleWare, async (req, res) => {
+router.post("/goods/:goodsId/cart", authMiddleware, async (req, res) => {
   const { userId } = res.locals.user;
   const { goodsId } = req.params;
   const { quantity } = req.body;
 
-  // 장바구니를 사용자 정보(userId)를 가지고, 장바구니를 조회한다.
-  const existsCarts = await Cart.find({ userId: goodsId });
+  const existsCarts = await Cart.find({ userId, goodsId }).exec();
   if (existsCarts.length) {
     return res.status(400).json({
       success: false,
@@ -90,14 +80,13 @@ router.post("/goods/:goodsId/cart", authMiddleWare, async (req, res) => {
     });
   }
 
-  // 해당하는 사용자의 정보(userId) 가지고, 장바구니에 상품을 등록한다.
   await Cart.create({ userId, goodsId, quantity });
 
   res.json({ result: "success" });
 });
 
-// 장바구니 수정 API
-router.put("/goods/:goodsId/cart", authMiddleWare, async (req, res) => {
+// 장바구니 상품 수정 API
+router.put("/goods/:goodsId/cart", authMiddleware, async (req, res) => {
   const { userId } = res.locals.user;
   const { goodsId } = req.params;
   const { quantity } = req.body;
@@ -112,8 +101,8 @@ router.put("/goods/:goodsId/cart", authMiddleWare, async (req, res) => {
   res.status(200).json({ success: true });
 });
 
-// 장바구니 삭제 API
-router.delete("/goods/:goodsId/cart", authMiddleWare, async (req, res) => {
+// 장바구니 상품 삭제 API
+router.delete("/goods/:goodsId/cart", authMiddleware, async (req, res) => {
   const { userId } = res.locals.user;
   const { goodsId } = req.params;
 
@@ -125,6 +114,7 @@ router.delete("/goods/:goodsId/cart", authMiddleWare, async (req, res) => {
   res.json({ result: "success" });
 });
 
+// 상품 등록 API
 router.post("/goods", async (req, res) => {
   const { goodsId, name, thumbnailUrl, category, price } = req.body;
 

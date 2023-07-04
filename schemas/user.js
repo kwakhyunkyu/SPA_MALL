@@ -1,29 +1,30 @@
 const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema({
-  email: {
-    // 중복이 된다고 했을때,
+  email: { // email 필드
     type: String,
-    requied: true,
-    unique: true, // 동일한 정보가 존재할 수 없다.
+    required: true, // 해당 field는 필수 요건
+    unique: true, // 해당 field는 중복된 값을 허용하지 않음
   },
-  nickname: {
+  nickname: { // nickname 필드
     type: String,
-    requied: true,
-    unique: true,
+    required: true, // 해당 field는 필수 요건
+    unique: true, // 해당 field는 중복된 값을 허용하지 않음
   },
-  password: {
+  password: { // password 필드
     type: String,
-    requied: true,
+    required: true,
   },
 });
 
+// 가상의 userId 값을 할당
 UserSchema.virtual("userId").get(function () {
   return this._id.toHexString();
 });
 
+// user 정보를 JSON으로 형변환 할 때 virtual 값이 출력되도록 설정
 UserSchema.set("toJSON", {
-  virtuals: true, // JSON 형태로 가공할 때, userId를 출력시켜준다.
+  virtuals: true,
 });
 
 module.exports = mongoose.model("User", UserSchema);
